@@ -225,35 +225,67 @@ def add_device():
     db.session.add(new_device)
     db.session.commit()
     return jsonify({"message": "Device added successfully"}), 201
-
-@app.route('/api/predict/<int:deviceId>', methods=['GET', 'POST'])
+  
+    
+@app.route('/api/predict/<int:deviceId>', methods=['POST'])
 def api_predict(deviceId):
-    device = Device.query.get_or_404(deviceId)
-    features = {
-        'battery_power': device.battery_power,
-        'blue': device.blue,
-        'clock_speed': device.clock_speed,
-        'dual_sim': device.dual_sim,
-        'fc': device.fc,
-        'four_g': device.four_g,
-        'int_memory': device.int_memory,
-        'm_dep': device.m_dep,
-        'mobile_wt': device.mobile_wt,
-        'n_cores': device.n_cores,
-        'pc': device.pc,
-        'px_height': device.px_height,
-        'px_width': device.px_width,
-        'ram': device.ram,
-        'sc_h': device.sc_h,
-        'sc_w': device.sc_w,
-        'talk_time': device.talk_time,
-        'three_g': device.three_g,
-        'touch_screen': device.touch_screen,
-        'wifi': device.wifi
-    }
+   
+# If no JSON data that means retrieve the data from the SQLite database by the ID then predict the price range
+    if request.is_json == False:
+        device = Device.query.get_or_404(deviceId)
+        features = {
+            'battery_power': device.battery_power,
+            'blue': device.blue,
+            'clock_speed': device.clock_speed,
+            'dual_sim': device.dual_sim,
+            'fc': device.fc,
+            'four_g': device.four_g,
+            'int_memory': device.int_memory,
+            'm_dep': device.m_dep,
+            'mobile_wt': device.mobile_wt,
+            'n_cores': device.n_cores,
+            'pc': device.pc,
+            'px_height': device.px_height,
+            'px_width': device.px_width,
+            'ram': device.ram,
+            'sc_h': device.sc_h,
+            'sc_w': device.sc_w,
+            'talk_time': device.talk_time,
+            'three_g': device.three_g,
+            'touch_screen': device.touch_screen,
+            'wifi': device.wifi
+        }
+    # if you got JSON data from external source then predict the price range, put first get the data from the JSON file
+    else:
+        device = request.get_json()
+        features = {
+            'battery_power': device.get('battery_power'),
+            'blue': device.get('blue'),
+            'clock_speed': device.get('clock_speed'),
+            'dual_sim': device.get('dual_sim'),
+            'fc': device.get('fc'),
+            'four_g': device.get('four_g'),
+            'int_memory': device.get('int_memory'),
+            'm_dep': device.get('m_dep'),
+            'mobile_wt': device.get('mobile_wt'),
+            'n_cores': device.get('n_cores'),
+            'pc': device.get('pc'),
+            'px_height': device.get('px_height'),
+            'px_width': device.get('px_width'),
+            'ram': device.get('ram'),
+            'sc_h': device.get('sc_h'),
+            'sc_w': device.get('sc_w'),
+            'talk_time': device.get('talk_time'),
+            'three_g': device.get('three_g'),
+            'touch_screen': device.get('touch_screen'),
+            'wifi': device.get('wifi')
+        }
 
+    # Prepare input data for the model prediction
     input_data = pd.DataFrame([list(features.values())], columns=features.keys())
-    input_data = input_data.drop(['sc_w','four_g','m_dep','clock_speed','touch_screen'], axis=1)
+    input_data = input_data.drop(['sc_w', 'four_g', 'm_dep', 'clock_speed', 'touch_screen'], axis=1)
+
+    # Predict the price range using the model
     predicted_price_range = model.predict(input_data)
     return jsonify({"predicted_price_range": int(predicted_price_range[0])}), 200
 
